@@ -1,4 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
+import asyncio
+from functools import wraps
 import numpy as np
 from PIL import Image
 import io
@@ -7,6 +9,21 @@ from typing import Tuple
 from facenet_pytorch import MTCNN, InceptionResnetV1
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+
+# Fonction decorator pour le timeout
+def async_timeout(seconds):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            try:
+                return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
+            except asyncio.TimeoutError:
+                raise HTTPException(
+                    status_code=408,
+                    detail="Le traitement a pris trop de temps"
+                )
+        return wrapper
+    return decorator
 
 app = FastAPI()
 
@@ -42,6 +59,7 @@ def extract_face_embedding(image: Image) -> Tuple[torch.Tensor, np.ndarray]:
     return face, face_embedding.detach().cpu().numpy()[0]
 
 @app.post("/api/face-recognition")
+@async_timeout(180) 
 async def face_recognition(
     image1: UploadFile = File(...),
     image2: UploadFile = File(...)) -> dict:
