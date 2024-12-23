@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configuration globale
-SIMILARITY_THRESHOLD = 0.8
+SIMILARITY_THRESHOLD = 0.55
 TIMEOUT_SECONDS = 30
 MAX_WORKERS = 4
 
@@ -178,4 +178,4 @@ async def root():
     return {"message": "API de reconnaissance faciale"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5021, workers=4)
+    uvicorn.run("main:app", host="0.0.0.0", port=5021, workers=4, reload=True)
